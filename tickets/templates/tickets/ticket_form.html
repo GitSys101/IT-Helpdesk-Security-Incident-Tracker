@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block header_title %}{% if form.instance.pk %}Edit Ticket #{{ form.instance.pk|stringformat:"04d" }}{% else %}Create New Ticket{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-end mb-2">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">
+                {% if form.instance.pk %}Update <span class="text-blue-600">Ticket</span>{% else %}Submit <span class="text-blue-600">Ticket</span>{% endif %}
+            </h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">
+                Provide accurate details for the issue.
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% if form.instance.pk %}{% url 'ticket_detail' form.instance.pk %}{% else %}{% url 'ticket_list' %}{% endif %}" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
+        <form method="post" enctype="multipart/form-data" class="p-8">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form %}
+                    <div class="space-y-2 {% if field.name in 'title,description,attachment,comment,nist_stage,assigned_to' %}md:col-span-2{% else %}md:col-span-1{% endif %}">
+                        
+                        {% if field.field.widget.input_type == 'checkbox' %}
+                            <div class="flex items-center space-x-3 mt-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200/60">
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="text-xs font-black text-slate-700 uppercase tracking-widest cursor-pointer select-none">{{ field.label }}</label>
+                            </div>
+                        {% else %}
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">{{ field.label }}</label>
+                            {{ field }}
+                        {% endif %}
+                        
+                        {% if field.errors %}
+                            <p class="text-[10px] font-bold text-rose-500 uppercase tracking-widest ml-1"><i class="fas fa-circle-exclamation mr-1"></i>{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <!-- Manual comment field for TicketUpdateView -->
+                {% if form.instance.pk %}
+                <div class="md:col-span-2 space-y-2 mt-4 pt-6 border-t border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Update Comment / Notes</label>
+                    <textarea name="comment" class="w-full px-4 py-3 bg-amber-50/30 border border-amber-200/60 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all" rows="2" placeholder="Provide a reason for the stage or status change..."></textarea>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-100 flex items-center justify-end space-x-3">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center group">
+                    <i class="fas fa-paper-plane mr-2 group-hover:translate-x-1 transition-transform"></i>
+                    {% if form.instance.pk %}Save Changes{% else %}Submit Ticket{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Dynamically apply Dashboard-style Tailwind classes to the Django widgets
+    document.addEventListener("DOMContentLoaded", function() {
+        const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], select, textarea');
+        textInputs.forEach(input => {
+            if (input.name !== 'comment') {
+                input.className = "w-full px-4 py-3 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all";
+            }
+        });
+        
+        // Force textareas to only be 4 rows tall to save vertical space
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(ta => {
+            if (ta.name !== 'comment') {
+                ta.rows = 4;
+            }
+        });
+        
+        const selects = document.querySelectorAll('select');
+        selects.forEach(select => {
+            select.classList.add('appearance-none', 'cursor-pointer');
+        });
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.className = "w-5 h-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer";
+        });
+        
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(file => {
+            file.className = "w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer";
+        });
+    });
+</script>
+{% endblock %}

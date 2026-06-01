@@ -1,0 +1,25 @@
+# Environments
+.env
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database
+db.sqlite3
+
+# Logs
+audit.log
+
+# Media
+media/
+incident_evidence/
+staticfiles/
+
+# System
+.DS_Store
+Thumbs.db

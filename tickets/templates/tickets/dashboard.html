@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Ticket Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Dashboard Stats Header -->
+    <div class="flex justify-between items-end mb-2">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">All <span class="text-blue-600">Tickets</span></h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Management & Response Console</p>
+        </div>
+        <div class="flex space-x-3 items-center">
+            <form method="get" class="flex space-x-3 items-center m-0">
+                <!-- Preserve sort if present -->
+                {% if request.GET.sort %}
+                    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                {% endif %}
+                
+                <!-- Search Bar (Always Visible) -->
+                <div class="relative group">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="q" placeholder="Keywords..." value="{{ request.GET.q }}"
+                        class="w-64 pl-9 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm">
+                </div>
+
+                <details class="group relative">
+                    <summary class="list-none cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center select-none h-full">
+                        <i class="fas fa-filter mr-2 text-blue-500 group-open:text-blue-600"></i>
+                        Filters
+                        <i class="fas fa-chevron-down ml-3 text-[10px] text-slate-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    
+                    <div class="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/60 p-6 z-50">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1.5 col-span-2">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Classification</label>
+                                <select name="type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="">All Types</option>
+                                    <option value="HELPDESK" {% if request.GET.type == 'HELPDESK' %}selected{% endif %}>Helpdesk</option>
+                                    <option value="INCIDENT" {% if request.GET.type == 'INCIDENT' %}selected{% endif %}>Incident</option>
+                                </select>
+                            </div>
+                
+                            <div class="space-y-1.5 col-span-2">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Stage</label>
+                                <select name="stage" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none cursor-pointer">
+                                    <option value="">All Stages</option>
+                                    <option value="PREPARATION" {% if request.GET.stage == 'PREPARATION' %}selected{% endif %}>Preparation</option>
+                                    <option value="DETECTION" {% if request.GET.stage == 'DETECTION' %}selected{% endif %}>Detection</option>
+                                    <option value="CONTAINMENT" {% if request.GET.stage == 'CONTAINMENT' %}selected{% endif %}>Containment</option>
+                                    <option value="RECOVERY" {% if request.GET.stage == 'RECOVERY' %}selected{% endif %}>Recovery</option>
+                                    <option value="POST_INCIDENT" {% if request.GET.stage == 'POST_INCIDENT' %}selected{% endif %}>Post-Incident</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
+                                <input type="date" name="start_date" value="{{ request.GET.start_date }}"
+                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Date</label>
+                                <input type="date" name="end_date" value="{{ request.GET.end_date }}"
+                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 mt-4 flex justify-end space-x-2 border-t border-slate-100">
+                            <a href="?" class="px-5 py-2.5 text-xs font-black text-slate-500 hover:text-slate-700 uppercase tracking-widest">Clear Filters</a>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all">
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                </details>
+            </form>
+            <a href="{% url 'ticket_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center group">
+                <i class="fas fa-plus mr-2 group-hover:rotate-90 transition-transform"></i>
+                New Ticket
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
+        <form action="{% url 'bulk_close' %}" method="post">
+            {% csrf_token %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            {% if user.role == 'MANAGER' %}
+                                <th class="px-6 py-4 w-12 text-center">
+                                    <input type="checkbox" id="select-all" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                </th>
+                            {% endif %}
+                            
+
+
+                            <!-- Raw HTML instead of macro to ensure jinja compatibility -->
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'id' or request.GET.sort == '-id' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'id' %}-id{% else %}id{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    UID <i class="fas {% if request.GET.sort == 'id' %}fa-sort-up{% elif request.GET.sort == '-id' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'ticket_type' or request.GET.sort == '-ticket_type' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'ticket_type' %}-ticket_type{% else %}ticket_type{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Class <i class="fas {% if request.GET.sort == 'ticket_type' %}fa-sort-up{% elif request.GET.sort == '-ticket_type' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'title' or request.GET.sort == '-title' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'title' %}-title{% else %}title{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Title <i class="fas {% if request.GET.sort == 'title' %}fa-sort-up{% elif request.GET.sort == '-title' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'nist_stage' or request.GET.sort == '-nist_stage' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'nist_stage' %}-nist_stage{% else %}nist_stage{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Stage <i class="fas {% if request.GET.sort == 'nist_stage' %}fa-sort-up{% elif request.GET.sort == '-nist_stage' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'priority' or request.GET.sort == '-priority' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'priority' %}-priority{% else %}priority{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Priority <i class="fas {% if request.GET.sort == 'priority' %}fa-sort-up{% elif request.GET.sort == '-priority' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'is_closed' or request.GET.sort == '-is_closed' %}text-blue-600{% else %}text-slate-500{% endif %}">
+                                <a href="?sort={% if request.GET.sort == 'is_closed' %}-is_closed{% else %}is_closed{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Status <i class="fas {% if request.GET.sort == 'is_closed' %}fa-sort-up{% elif request.GET.sort == '-is_closed' %}fa-sort-down{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest whitespace-nowrap {% if request.GET.sort == 'created_at' or request.GET.sort == '-created_at' or not request.GET.sort %}text-blue-600{% else %}text-slate-500{% endif %} flex justify-end">
+                                <a href="?sort={% if request.GET.sort == '-created_at' or not request.GET.sort %}created_at{% else %}-created_at{% endif %}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="hover:text-blue-600 flex items-center group">
+                                    Created <i class="fas {% if request.GET.sort == '-created_at' or not request.GET.sort %}fa-sort-down{% elif request.GET.sort == 'created_at' %}fa-sort-up{% else %}fa-sort opacity-30 group-hover:opacity-100{% endif %} ml-1.5"></i>
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for ticket in tickets %}
+                        <tr class="hover:bg-blue-50/30 transition-colors group">
+                            {% if user.role == 'MANAGER' %}
+                                <td class="px-6 py-4 text-center">
+                                    {% if not ticket.is_closed %}
+                                        <input type="checkbox" name="ticket_ids" value="{{ ticket.id }}" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                            <td class="px-6 py-4">
+                                <span class="mono text-xs font-bold text-slate-400">#{{ ticket.id|stringformat:"04d" }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider 
+                                    {% if ticket.ticket_type == 'INCIDENT' %}
+                                        bg-rose-100 text-rose-700 border border-rose-200
+                                    {% else %}
+                                        bg-blue-100 text-blue-700 border border-blue-200
+                                    {% endif %}">
+                                    <i class="fas {% if ticket.ticket_type == 'INCIDENT' %}fa-bolt mr-1.5{% else %}fa-circle-info mr-1.5{% endif %} text-[9px]"></i>
+                                    {{ ticket.get_ticket_type_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="{% url 'ticket_detail' ticket.id %}" class="text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors block leading-tight">
+                                    {{ ticket.title }}
+                                </a>
+                                <span class="text-[10px] text-slate-400 font-medium">Reporter: {{ ticket.reporter.username }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-bold text-slate-600">{{ ticket.get_nist_stage_display }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-black uppercase tracking-tighter
+                                    {% if ticket.priority == 'CRITICAL' or ticket.priority == 'HIGH' %}
+                                        text-rose-600
+                                    {% elif ticket.priority == 'MEDIUM' %}
+                                        text-amber-600
+                                    {% else %}
+                                        text-slate-500
+                                    {% endif %}">
+                                    {{ ticket.get_priority_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if ticket.is_closed %}
+                                    <span class="flex items-center text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                                        <i class="fas fa-circle-check mr-1.5"></i>Resolved
+                                    </span>
+                                {% else %}
+                                    <span class="flex items-center text-[10px] font-black text-amber-500 uppercase tracking-widest animate-pulse">
+                                        <i class="fas fa-clock mr-1.5"></i>Active
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[11px] font-bold text-slate-600">{{ ticket.created_at|date:"M d, Y" }}</span>
+                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ ticket.created_at|date:"h:i A" }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-20 text-center">
+                                <div class="flex flex-col items-center justify-center space-y-3 opacity-20">
+                                    <i class="fas fa-inbox text-5xl text-slate-400"></i>
+                                    <p class="text-sm font-black uppercase tracking-widest">No Security Logs Found</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if is_paginated %}
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-xs text-slate-500 font-medium">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} tickets
+                </span>
+                <div class="flex space-x-2">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&sort={{ request.GET.sort }}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="px-3 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-600 hover:bg-slate-50">Previous</a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&sort={{ request.GET.sort }}&q={{ request.GET.q }}&type={{ request.GET.type }}&stage={{ request.GET.stage }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}" class="px-3 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-600 hover:bg-slate-50">Next</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if user.role == 'MANAGER' %}
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-200">
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all flex items-center">
+                        <i class="fas fa-check-double mr-2"></i>
+                        Bulk Resolve Selected
+                    </button>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('select-all')?.addEventListener('click', function(e) {
+        document.querySelectorAll('input[name="ticket_ids"]').forEach(cb => cb.checked = e.target.checked);
+    });
+</script>
+{% endblock %}

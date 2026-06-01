@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Security Audit Logs{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-end mb-2">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">System <span class="text-emerald-600">Audit Logs</span></h2>
+            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Immutable Event Tracking & Chain of Custody</p>
+        </div>
+        <div class="flex space-x-3 items-center">
+            <input type="date" id="startDate" class="px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+            <span class="text-slate-400 font-black text-xs">TO</span>
+            <input type="date" id="endDate" class="px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+            
+            <div class="relative group ml-2">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="logSearch" placeholder="Search events..." class="w-64 pl-9 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm">
+            </div>
+            
+            <button id="clearFiltersBtn" class="px-4 py-3 text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors shrink-0">Clear Filters</button>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
+        <div class="p-0">
+            <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-200">
+                    <th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest w-48">Timestamp</th>
+                    <th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest w-32">Severity</th>
+                    <th class="px-8 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Event Description</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 mono text-xs">
+                {% for log in logs %}
+                    <tr class="hover:bg-slate-50/50 transition-colors log-row">
+                        <td class="px-8 py-3 text-slate-500 font-medium whitespace-nowrap">{{ log.timestamp }}</td>
+                        <td class="px-8 py-3">
+                            {% if log.level == "INFO" %}
+                                <span class="text-blue-600 font-bold">INFO</span>
+                            {% elif log.level == "WARNING" %}
+                                <span class="text-amber-500 font-bold">WARNING</span>
+                            {% elif log.level == "ERROR" %}
+                                <span class="text-red-600 font-bold">ERROR</span>
+                            {% else %}
+                                <span class="text-slate-600 font-bold">{{ log.level }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-8 py-3 text-slate-700 font-medium">{{ log.message }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-8 py-12 text-center text-slate-400 font-black uppercase tracking-widest text-xs">
+                            No logs found in audit.log
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('logSearch');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const tableRows = document.querySelectorAll('tbody tr.log-row');
+
+        function filterLogs() {
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
+            const startStr = startDateInput ? startDateInput.value : '';
+            const endStr = endDateInput ? endDateInput.value : '';
+            
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowDateFull = row.querySelector('td:first-child')?.textContent.trim() || '';
+                const rowDate = rowDateFull.split(' ')[0]; // Gets YYYY-MM-DD
+                
+                let matchesSearch = text.includes(term);
+                let matchesStart = !startStr || rowDate >= startStr;
+                let matchesEnd = !endStr || rowDate <= endStr;
+
+                if (matchesSearch && matchesStart && matchesEnd) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        if (searchInput) searchInput.addEventListener('keyup', filterLogs);
+        if (startDateInput) startDateInput.addEventListener('change', filterLogs);
+        if (endDateInput) endDateInput.addEventListener('change', filterLogs);
+        
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function() {
+                if (searchInput) searchInput.value = '';
+                if (startDateInput) startDateInput.value = '';
+                if (endDateInput) endDateInput.value = '';
+                filterLogs();
+            });
+        }
+    });
+</script>
+{% endblock %}

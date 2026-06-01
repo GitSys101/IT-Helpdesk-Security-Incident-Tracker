@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IT Helpdesk & Security Incident Tracker{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .nav-glow {
+            box-shadow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 min-h-screen">
+    <div class="flex {% if user.is_authenticated %}h-screen overflow-hidden{% else %}flex-col min-h-screen{% endif %} relative">
+        {% if user.is_authenticated %}
+            <!-- Mobile overlay -->
+            <div id="mobile-overlay" onclick="toggleMobileMenu()" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden"></div>
+
+            <!-- Sidebar for Authenticated Users -->
+            <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 absolute inset-y-0 left-0 z-50 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
+                <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
+                    <img src="{% static 'img/logo.png' %}" alt="ShieldCore Logo" class="w-8 h-8 object-contain drop-shadow-md">
+                    <div class="flex flex-col">
+                        <span class="text-white font-black italic tracking-tighter text-sm uppercase leading-none">IT <span class="text-blue-500">Helpdesk</span></span>
+                        <span class="text-slate-500 font-bold text-[8px] uppercase tracking-widest mt-1">& Security Incident Tracker</span>
+                    </div>
+                </div>
+                
+                <nav class="flex-grow py-6 space-y-1">
+                    <div class="px-6 mb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Navigation</div>
+                    <a href="{% url 'dashboard' %}" class="flex items-center px-6 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all group {% if request.resolver_match.url_name == 'dashboard' %}border-l-4 border-blue-500 bg-slate-800/50 text-white{% endif %}">
+                        <i class="fas fa-chart-pie text-sm mr-3 group-hover:text-blue-400"></i>
+                        <span class="text-sm font-semibold">Dashboard</span>
+                    </a>
+                    <a href="{% url 'ticket_list' %}" class="flex items-center px-6 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all group {% if request.resolver_match.url_name == 'ticket_list' %}border-l-4 border-blue-500 bg-slate-800/50 text-white{% endif %}">
+                        <i class="fas fa-ticket-alt text-sm mr-3 group-hover:text-blue-400"></i>
+                        <span class="text-sm font-semibold">All Tickets</span>
+                    </a>
+
+                    <div class="px-6 py-4 mt-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Activity</div>
+                    <a href="{% url 'audit_logs' %}" class="flex items-center px-6 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all group {% if request.resolver_match.url_name == 'audit_logs' %}border-l-4 border-blue-500 bg-slate-800/50 text-white{% endif %}">
+                        <i class="fas fa-list-check text-sm mr-3 text-emerald-500"></i>
+                        <span class="text-sm font-semibold">{% if user.is_technician or user.is_staff %}System Audit Logs{% else %}My Audit Logs{% endif %}</span>
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'admin:index' %}" class="flex items-center px-6 py-3 text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all group">
+                        <i class="fas fa-user-shield text-sm mr-3 group-hover:text-blue-400"></i>
+                        <span class="text-sm font-semibold">Admin Panel</span>
+                    </a>
+                    {% endif %}
+                </nav>
+
+                <div class="p-4 border-t border-slate-800">
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full flex items-center justify-center space-x-2 py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 rounded-xl transition-all font-bold text-xs uppercase tracking-widest border border-red-500/20 group">
+                            <i class="fas fa-power-off group-hover:rotate-90 transition-transform"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+        {% endif %}
+
+        <!-- Main Area -->
+        <div class="flex-grow flex flex-col overflow-hidden w-full relative z-10">
+            {% if user.is_authenticated %}
+                <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shadow-sm">
+                    <div class="flex items-center">
+                        <button onclick="toggleMobileMenu()" class="md:hidden mr-4 text-slate-500 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
+                        <h1 class="text-base md:text-lg font-bold text-slate-800 tracking-tight truncate max-w-[150px] md:max-w-none">{% block header_title %}Overview{% endblock %}</h1>
+                    </div>
+                    <div class="flex items-center space-x-3 md:space-x-6">
+                        <div class="hidden md:block mono text-[10px] bg-slate-100 px-3 py-1 rounded-full text-slate-500 font-bold">
+                            <span id="clock"></span>
+                        </div>
+                        <div class="flex items-center space-x-3 pl-3 md:pl-6 border-l border-slate-200">
+                            <div class="text-right">
+                                <p class="text-[10px] md:text-xs font-black text-slate-900 leading-none">{{ user.username }}</p>
+                                <p class="hidden md:block text-[9px] font-bold text-blue-600 uppercase tracking-tighter mt-1">{{ user.job_title }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            {% endif %}
+
+            <main class="flex-grow overflow-y-auto {% if not user.is_authenticated %}flex items-center justify-center p-4{% else %}p-8 bg-slate-50/50{% endif %}">
+                <div class="w-full {% if not user.is_authenticated %}max-w-md{% endif %}">
+                    {% if messages %}
+                        <div id="django-messages" class="mb-8">
+                            {% for message in messages %}
+                                <div class="p-4 rounded-xl border-l-4 mb-4 {% if message.tags == 'error' %}bg-red-50 border-red-500 text-red-900{% else %}bg-blue-50 border-blue-500 text-blue-900{% endif %} shadow-sm flex items-center transition-all duration-500 ease-out transform">
+                                    <i class="fas {% if message.tags == 'error' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} mr-3"></i>
+                                    <p class="font-bold text-xs uppercase tracking-wider">{{ message }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function toggleMobileMenu() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.toggle('hidden');
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const clockEl = document.getElementById('clock');
+            if (clockEl) clockEl.innerText = now.toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Auto-dismiss messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const msgContainer = document.getElementById('django-messages');
+            if (msgContainer) {
+                setTimeout(() => {
+                    const alerts = msgContainer.children;
+                    for (let i = 0; i < alerts.length; i++) {
+                        alerts[i].style.opacity = '0';
+                        alerts[i].style.transform = 'translateY(-10px)';
+                        setTimeout(() => {
+                            alerts[i].style.display = 'none';
+                        }, 500);
+                    }
+                }, 4000); // 4 seconds delay before fading
+            }
+        });
+    </script>
+</body>
+</html>

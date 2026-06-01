@@ -5,33 +5,39 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Dashboard Stats Header -->
-    <div class="flex justify-between items-end mb-2">
-        <div>
-            <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">All <span class="text-blue-600">Tickets</span></h2>
-            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Management & Response Console</p>
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-2">
+        <div class="flex justify-between items-start w-full lg:w-auto">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">All <span class="text-blue-600">Tickets</span></h2>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Management & Response Console</p>
+            </div>
+            <a href="{% url 'ticket_create' %}" class="lg:hidden bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-xl shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center shrink-0">
+                <i class="fas fa-plus"></i>
+            </a>
         </div>
-        <div class="flex space-x-3 items-center">
-            <form method="get" class="flex space-x-3 items-center m-0">
+
+        <div class="flex items-center gap-2 w-full lg:w-auto">
+            <form method="get" class="flex items-center gap-2 w-full m-0">
                 <!-- Preserve sort if present -->
                 {% if request.GET.sort %}
                     <input type="hidden" name="sort" value="{{ request.GET.sort }}">
                 {% endif %}
                 
-                <!-- Search Bar (Always Visible) -->
-                <div class="relative group">
+                <!-- Search Bar -->
+                <div class="relative flex-grow">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="q" placeholder="Keywords..." value="{{ request.GET.q }}"
-                        class="w-64 pl-9 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm">
+                    <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}"
+                        class="w-full lg:w-64 pl-9 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm">
                 </div>
 
                 <details class="group relative">
-                    <summary class="list-none cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center select-none h-full">
-                        <i class="fas fa-filter mr-2 text-blue-500 group-open:text-blue-600"></i>
-                        Filters
-                        <i class="fas fa-chevron-down ml-3 text-[10px] text-slate-400 group-open:rotate-180 transition-transform"></i>
+                    <summary class="list-none cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 w-12 h-12 lg:w-auto lg:px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center justify-center select-none">
+                        <i class="fas fa-filter text-blue-500 group-open:text-blue-600"></i>
+                        <span class="hidden lg:inline ml-2">Filters</span>
+                        <i class="hidden lg:inline fas fa-chevron-down ml-3 text-[10px] text-slate-400 group-open:rotate-180 transition-transform"></i>
                     </summary>
                     
-                    <div class="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/60 p-6 z-50">
+                    <div class="absolute right-0 lg:right-0 top-full mt-2 w-[85vw] sm:w-[400px] bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/60 p-6 z-50">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1.5 col-span-2">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Classification</label>

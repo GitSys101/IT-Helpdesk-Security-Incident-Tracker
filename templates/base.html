@@ -99,7 +99,7 @@
                 </header>
             {% endif %}
 
-            <main class="flex-grow overflow-y-auto {% if not user.is_authenticated %}flex items-center justify-center p-4{% else %}p-8 bg-slate-50/50{% endif %}">
+            <main class="flex-grow overflow-y-auto {% if not user.is_authenticated %}flex items-center justify-center p-4{% else %}p-4 md:p-8 bg-slate-50/50{% endif %}">
                 <div class="w-full {% if not user.is_authenticated %}max-w-md{% endif %}">
                     {% if messages %}
                         <div id="django-messages" class="mb-8">

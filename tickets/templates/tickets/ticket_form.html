@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="flex justify-between items-end mb-2">
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-2">
         <div>
             <h2 class="text-2xl font-black text-slate-800 tracking-tight italic uppercase">
                 {% if form.instance.pk %}Update <span class="text-blue-600">Ticket</span>{% else %}Submit <span class="text-blue-600">Ticket</span>{% endif %}
@@ -14,8 +14,8 @@
                 Provide accurate details for the issue.
             </p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{% if form.instance.pk %}{% url 'ticket_detail' form.instance.pk %}{% else %}{% url 'ticket_list' %}{% endif %}" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center">
+        <div class="w-full sm:w-auto">
+            <a href="{% if form.instance.pk %}{% url 'ticket_detail' form.instance.pk %}{% else %}{% url 'ticket_list' %}{% endif %}" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-sm transition-all flex items-center justify-center">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back
             </a>
@@ -24,7 +24,7 @@
 
     <!-- Main Card -->
     <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200/60 overflow-hidden">
-        <form method="post" enctype="multipart/form-data" class="p-8">
+        <form method="post" enctype="multipart/form-data" class="p-4 sm:p-8">
             {% csrf_token %}
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

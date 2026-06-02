@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 
 class RoleBasedLoginView(LoginView):
     template_name = 'accounts/login.html'
+    redirect_authenticated_user = True
 
     def get_success_url(self):
         if self.request.user.is_superuser:

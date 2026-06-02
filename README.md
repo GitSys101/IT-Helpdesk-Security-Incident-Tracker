@@ -56,7 +56,3 @@ An enterprise-grade Django application for logging IT support tickets and securi
 
 ## Audit Logging
 All authentication events and ticket modifications (including before/after diffs) are permanently burned into `audit.log` for strict compliance tracking.
-
-## Admin Credentials
-- **Username**: `admin`
-- **Password**: `adminpassword123` (Change immediately in production)

@@ -30,7 +30,6 @@ class Ticket(models.Model):
     ticket_type = models.CharField(max_length=20, choices=TICKET_TYPE_CHOICES, default='HELPDESK')
     nist_stage = models.CharField(max_length=20, choices=NIST_STAGE_CHOICES, default='PREPARATION')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MEDIUM')
-    attachment = models.ImageField(upload_to='incident_evidence/', blank=True, null=True)
     
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reported_tickets')
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
@@ -60,6 +59,14 @@ class Ticket(models.Model):
         
         if is_new:
             audit_logger.info(f"[Reporter: {self.reporter.username}] New Ticket created: ID {self.pk}, Type {self.ticket_type}")
+
+class TicketAttachment(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
+    file = models.ImageField(upload_to='incident_evidence/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Attachment for Ticket {self.ticket.id}"
 
 class TicketUpdate(models.Model):
     """Stores detailed chain of custody / updates"""

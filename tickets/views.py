@@ -5,6 +5,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, T
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Ticket, TicketUpdate
+from .forms import TicketForm, TicketAttachmentFormSet
 from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
@@ -136,16 +137,32 @@ class TicketCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return not is_manager(self.request.user)
 
     model = Ticket
-    fields = ['title', 'description', 'ticket_type', 'priority', 'attachment']
+    form_class = TicketForm
     template_name = 'tickets/ticket_form.html'
     success_url = reverse_lazy('dashboard')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['formset'] = TicketAttachmentFormSet(self.request.POST, self.request.FILES)
+        else:
+            context['formset'] = TicketAttachmentFormSet()
+        return context
+
     def form_valid(self, form):
-        form.instance.reporter = self.request.user
-        response = super().form_valid(form)
-        ticket_title = self.object.title
-        audit_logger.info(f"Ticket Create: Ticket #{self.object.id} ('{ticket_title}') was created by {self.request.user.username}.")
-        return response
+        context = self.get_context_data()
+        formset = context['formset']
+        if formset.is_valid():
+            form.instance.reporter = self.request.user
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+            ticket_title = self.object.title
+            audit_logger.info(f"Ticket Create: Ticket #{self.object.id} ('{ticket_title}') was created by {self.request.user.username}.")
+            from django.http import HttpResponseRedirect
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
 
 class TicketDetailView(LoginRequiredMixin, DetailView):
     model = Ticket
@@ -253,7 +270,7 @@ class AuditLogView(LoginRequiredMixin, TemplateView):
 
 class TicketUserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Ticket
-    fields = ['title', 'description', 'ticket_type', 'priority', 'attachment']
+    form_class = TicketForm
     template_name = 'tickets/ticket_form.html'
     
     def test_func(self):
@@ -263,7 +280,21 @@ class TicketUserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('ticket_detail', kwargs={'pk': self.object.pk})
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['formset'] = TicketAttachmentFormSet(self.request.POST, self.request.FILES, instance=self.object)
+        else:
+            context['formset'] = TicketAttachmentFormSet(instance=self.object)
+        return context
+
     def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context['formset']
+        
+        if not formset.is_valid():
+            return self.form_invalid(form)
+
         ticket_id = self.object.id
         old_ticket = Ticket.objects.get(pk=ticket_id)
         
@@ -277,7 +308,9 @@ class TicketUserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         if old_ticket.priority != form.cleaned_data.get('priority'):
             changes.append(f"Priority: '{old_ticket.get_priority_display()}' -> '{dict(Ticket.PRIORITY_CHOICES).get(form.cleaned_data.get('priority'))}'")
             
-        response = super().form_valid(form)
+        self.object = form.save()
+        formset.instance = self.object
+        formset.save()
         
         if changes:
             changes_str = ", ".join(changes)
@@ -285,7 +318,8 @@ class TicketUserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         else:
             audit_logger.info(f"Ticket Edit: Ticket #{ticket_id} ('{self.object.title}') was saved by {self.request.user.username} with no visible changes.")
             
-        return response
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(self.get_success_url())
 
 class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Ticket

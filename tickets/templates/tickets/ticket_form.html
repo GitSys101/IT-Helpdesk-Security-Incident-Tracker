@@ -47,6 +47,38 @@
                     </div>
                 {% endfor %}
 
+                {% if formset %}
+                <div class="md:col-span-2 mt-4 pt-6 border-t border-slate-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Evidence / Attachments</label>
+                    </div>
+                    
+                    {{ formset.management_form }}
+                    <div id="formset-container" class="space-y-3">
+                        {% for f in formset %}
+                            <div class="formset-row flex items-center space-x-3 bg-slate-50/50 p-3 rounded-xl border border-slate-200/60 transition-all">
+                                <div class="flex-grow">
+                                    {{ f.id }}
+                                    {{ f.file }}
+                                    {% if f.file.errors %}
+                                        <p class="text-[10px] font-bold text-rose-500 uppercase tracking-widest mt-1"><i class="fas fa-circle-exclamation mr-1"></i>{{ f.file.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if formset.can_delete and f.instance.pk %}
+                                    <div class="flex items-center space-x-2 border-l border-slate-200 pl-3">
+                                        {{ f.DELETE }}
+                                        <label class="text-[10px] font-black text-rose-500 uppercase tracking-widest cursor-pointer mb-0 mt-1">Delete</label>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-formset-row" class="mt-3 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors flex items-center shadow-sm border border-slate-200/60">
+                        <i class="fas fa-plus mr-2"></i> Add Another File
+                    </button>
+                </div>
+                {% endif %}
+
                 <!-- Manual comment field for TicketUpdateView -->
                 {% if form.instance.pk %}
                 <div class="md:col-span-2 space-y-2 mt-4 pt-6 border-t border-slate-100">
@@ -96,8 +128,56 @@
         
         const fileInputs = document.querySelectorAll('input[type="file"]');
         fileInputs.forEach(file => {
-            file.className = "w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer";
+            if (!file.classList.contains('styled')) {
+                file.className = "styled w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:uppercase file:tracking-widest file:font-black file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer";
+            }
         });
+
+        // Dynamic Formset Logic
+        const addBtn = document.getElementById('add-formset-row');
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                const container = document.getElementById('formset-container');
+                const totalFormsInputNode = document.querySelector('input[id$="-TOTAL_FORMS"]');
+                if(!totalFormsInputNode) return;
+                
+                const formCount = parseInt(totalFormsInputNode.value);
+                const rows = container.querySelectorAll('.formset-row');
+                if(rows.length === 0) return;
+                
+                // Clone the FIRST row because the last row might have a populated ID or DELETE checkbox
+                const newRow = rows[0].cloneNode(true); 
+                
+                // Update names and ids
+                const inputs = newRow.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.name = input.name.replace(`-0-`, `-${formCount}-`);
+                    input.id = input.id.replace(`-0-`, `-${formCount}-`);
+                    if(input.type === 'file' || input.type === 'text' || input.type === 'hidden') input.value = '';
+                    if(input.type === 'checkbox') input.checked = false;
+                });
+                
+                // Remove delete checkbox div from cloned row
+                const deleteDiv = newRow.querySelector('.border-l');
+                if(deleteDiv) deleteDiv.remove();
+                
+                // Add a dynamic remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-700 transition-colors ml-3 border border-rose-200 bg-rose-50 px-3 py-2 rounded-lg shrink-0';
+                removeBtn.innerHTML = '<i class="fas fa-times mr-1"></i> Remove';
+                removeBtn.addEventListener('click', function() {
+                    // Clear the input and hide the row. Django formsets safely ignore empty extra forms.
+                    const fileInput = newRow.querySelector('input[type="file"]');
+                    if(fileInput) fileInput.value = '';
+                    newRow.style.display = 'none';
+                });
+                newRow.appendChild(removeBtn);
+                
+                container.appendChild(newRow);
+                totalFormsInputNode.value = formCount + 1;
+            });
+        }
     });
 </script>
 {% endblock %}

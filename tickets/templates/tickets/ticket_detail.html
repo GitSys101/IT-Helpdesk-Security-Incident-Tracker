@@ -78,14 +78,19 @@
                 {{ ticket.description|linebreaks }}
             </div>
             
-            {% if ticket.attachment %}
+            {% if ticket.attachments.all %}
             <div class="mt-6">
-                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4"><i class="fas fa-paperclip mr-2"></i>Evidence / Attachment</h3>
-                <div class="relative group rounded-xl overflow-hidden border border-slate-200 inline-block w-full sm:w-auto">
-                    <img src="{{ ticket.attachment.url }}" alt="Evidence" class="w-full sm:max-w-md max-h-96 sm:max-h-64 object-contain sm:object-cover">
-                    <a href="{{ ticket.attachment.url }}" target="_blank" class="absolute inset-0 bg-slate-900/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span class="bg-white text-slate-900 text-xs font-bold px-4 py-2 rounded-lg">View Full Image</span>
-                    </a>
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4"><i class="fas fa-paperclip mr-2"></i>Evidence / Attachments</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for attachment in ticket.attachments.all %}
+                    <div class="relative group rounded-xl overflow-hidden border border-slate-200 w-full bg-slate-50 aspect-video flex items-center justify-center">
+                        <img src="{{ attachment.file.url }}" alt="Evidence" class="w-full h-full object-cover">
+                        <a href="{{ attachment.file.url }}" target="_blank" class="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                            <i class="fas fa-expand text-white text-xl mb-2 translate-y-2 group-hover:translate-y-0 transition-transform"></i>
+                            <span class="bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-lg">View Full Image</span>
+                        </a>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}

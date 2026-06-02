@@ -20,7 +20,7 @@ def is_manager(user):
     return user.is_authenticated and user.role == 'MANAGER'
 
 def is_technician(user):
-    return user.is_authenticated and (user.role in ['TECHNICIAN', 'ANALYST', 'MANAGER'])
+    return user.is_authenticated and (user.role in ['RESPONDER', 'MANAGER'])
 
 
 class DashboardSummaryView(LoginRequiredMixin, TemplateView):
@@ -185,7 +185,7 @@ class TicketUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         # Only allow assigning to IT Staff (exclude End Users and Managers)
-        form.fields['assigned_to'].queryset = User.objects.filter(role__in=['TECHNICIAN', 'ANALYST'])
+        form.fields['assigned_to'].queryset = User.objects.filter(role='RESPONDER')
         
         # Enforce Linear NIST Stage Progression
         current_stage = self.object.nist_stage

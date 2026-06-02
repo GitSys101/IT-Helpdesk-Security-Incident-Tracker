@@ -43,22 +43,7 @@ class Ticket(models.Model):
         return f"[{self.ticket_type}] {self.title} - {self.nist_stage}"
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if not is_new:
-            old_ticket = Ticket.objects.get(pk=self.pk)
-            changes = []
-            if old_ticket.nist_stage != self.nist_stage:
-                changes.append(f"Stage changed from {old_ticket.nist_stage} to {self.nist_stage}")
-            if old_ticket.is_closed != self.is_closed:
-                changes.append(f"Status changed to {'Closed' if self.is_closed else 'Open'}")
-            
-            if changes:
-                audit_logger.info(f"[Reporter: {self.reporter.username}] Ticket {self.pk} updated: {', '.join(changes)}")
-        
         super().save(*args, **kwargs)
-        
-        if is_new:
-            audit_logger.info(f"[Reporter: {self.reporter.username}] New Ticket created: ID {self.pk}, Type {self.ticket_type}")
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')

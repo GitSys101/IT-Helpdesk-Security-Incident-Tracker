@@ -18,11 +18,11 @@ class Command(BaseCommand):
             employee_id='EMP001', department='IT Management'
         )
         tech = CustomUser.objects.create_user(
-            username='tech1', password='password123', role='TECHNICIAN', 
+            username='tech1', password='password123', role='RESPONDER', 
             employee_id='EMP002', department='IT Support'
         )
         analyst = CustomUser.objects.create_user(
-            username='analyst1', password='password123', role='ANALYST', 
+            username='analyst1', password='password123', role='RESPONDER', 
             employee_id='EMP003', department='Cybersecurity'
         )
         user1 = CustomUser.objects.create_user(
